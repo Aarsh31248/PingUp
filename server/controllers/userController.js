@@ -83,10 +83,34 @@ export const updateUserData = async (req, res) => {
       updatedData.cover_photo = url;
     }
 
-    const user = await User.findByIdAndUpdate(userId, updatedData, {new: true})
+    const user = await User.findByIdAndUpdate(userId, updatedData, {
+      new: true,
+    });
 
-    res.json({success: true, user, message: "Profile Updated Successfully"})
+    res.json({ success: true, user, message: "Profile Updated Successfully" });
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: error.message });
+  }
+};
 
+// Find Users using username, email, location, name
+export const discoverUsers = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+    const { input } = req.body;
+
+    const allUsers = await User.find({
+      $or: [
+        { username: new RegExp(input, "i") },
+        { email: new RegExp(input, "i") },
+        { full_name: new RegExp(input, "i") },
+        { location: new RegExp(input, "i") },
+      ],
+    });
+    const filteredUsers = allUsers.filter((user) => user._id !== userId);
+
+    res.json({ success: true, users: filteredUsers });
   } catch (error) {
     console.log(error);
     return res.json({ success: false, message: error.message });
