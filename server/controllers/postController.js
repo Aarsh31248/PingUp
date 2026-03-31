@@ -50,6 +50,23 @@ export const addPost = async (req, res) => {
   }
 };
 
+// get posts
+export const getFeedPosts = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+    const user = await User.findById(userId);
 
+    // User connections and followings
+    const userIds = [userId, ...user.connections, ...user.following];
+    const posts = await Post.find({ user: { $in: userIds } })
+      .populate("user")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, posts });
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: error.message });
+  }
+};
 
 
