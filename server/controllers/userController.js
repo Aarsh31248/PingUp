@@ -116,3 +116,33 @@ export const discoverUsers = async (req, res) => {
     return res.json({ success: false, message: error.message });
   }
 };
+
+// Follow user
+export const followUser = async (req, res) => {
+  try {
+    const { userId } = req.auth(); // logged in user
+    const { id } = req.body; // the user wants to follow
+
+    const user = await User.findById(userId);
+
+    if (user.following.includes(id)) {
+      return res.json({
+        success: false,
+        message: "You are already following this user",
+      });
+    }
+
+    user.following.push(id);
+    await user.save();
+
+    const toUser = await User.findById(id);
+    toUser.followers.push(userId);
+
+    await toUser.save();
+
+    res.json({ success: true, message: "Now you are following this user" });
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: error.message });
+  }
+};
