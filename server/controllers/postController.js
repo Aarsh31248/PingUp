@@ -69,4 +69,25 @@ export const getFeedPosts = async (req, res) => {
   }
 };
 
+// Like Post
+export const likePost = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+    const { postId } = req.body;
 
+    const post = await Post.findById(postId);
+
+    if (post.likes_count.includes(userId)) {
+      post.likes_count = post.likes_count.filter((user) => user !== userId);
+      await post.save();
+      res.json({ success: true, message: "Post Unliked" });
+    } else {
+      post.likes_count.push(userId);
+      await post.save();
+      res.json({ success: true, message: "Post Liked" });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: error.message });
+  }
+};
