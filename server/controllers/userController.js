@@ -2,6 +2,7 @@ import { format } from "path";
 import imagekit from "../configs/imageKit.js";
 import User from "../models/User.js";
 import fs from "fs";
+import Connection from "../models/Connection.js";
 
 // Get user data using userId
 export const getUserData = async (req, res) => {
@@ -22,7 +23,7 @@ export const getUserData = async (req, res) => {
 export const updateUserData = async (req, res) => {
   try {
     const { userId } = req.auth();
-    const { username, bio, location, full_name } = req.body;
+    let { username, bio, location, full_name } = req.body;
 
     const tempUser = await User.findById(userId);
 
@@ -164,6 +165,61 @@ export const unfollowUser = async (req, res) => {
     res.json({
       success: true,
       message: "You are no longer following this user",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: error.message });
+  }
+};
+
+// Send connection request
+export const sendConnectionRequest = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+    const { id } = req.body;
+
+    // Check if user has sent more than 20 connection requests in the last 24 hours
+    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const connectionRequest = await Connection.find({
+      from_user_id: userId,
+      created_at: { $gt: last24Hours },
+    });
+
+    if (connectionRequest.length >= 20) {
+      return res.json({
+        success: false,
+        message:
+          "You have sent more than 20 connection request in the last 24 hours",
+      });
+    }
+
+    // Check if users are already connected
+    const connection = await Connection.findOne({
+      $or: [
+        { from_user_id: userId, to_user_id: id },
+        { from_user_id: id, to_user_id: userId },
+      ],
+    });
+
+    if (!connection) {
+      await Connection.create({
+        from_user_id: userId,
+        to_user_id: id,
+      });
+      res.json({
+        success: true,
+        message: "Connection request send successfully",
+      });
+    } else if (connection && connection.status === "accepted") {
+      return res.json({
+        success: false,
+        message: "You are already connected with this user",
+      });
+    }
+
+    return res.json({
+      success: false,
+      message: "Connection request Pending",
     });
   } catch (error) {
     console.log(error);
