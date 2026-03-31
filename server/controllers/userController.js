@@ -258,3 +258,38 @@ export const getUserConnections = async (req, res) => {
   }
 };
 
+// Accept Connection Request
+export const acceptConnectionRequest = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+    const { id } = req.body;
+
+    const connection = await Connection.findOne({
+      from_user_id: id,
+      to_user_id: userId,
+    });
+
+    if (!connection) {
+      return res.json({ success: false, message: "Connection not found" });
+    }
+
+    const user = await User.findById(userId);
+    user.connections.push(id);
+    await user.save();
+
+    const touser = await User.findById(id);
+    touser.connections.push(userId);
+    await touser.save();
+
+    connection.status = "accepted";
+    await connection.save();
+
+    return res.json({
+      success: false,
+      message: "Connection accepted successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: error.message });
+  }
+};
