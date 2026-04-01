@@ -10,10 +10,10 @@ export const addPost = async (req, res) => {
     const { content, post_type } = req.body;
     const images = req.files;
 
-    let image_urls = [];
+    let img_urls = [];
 
     if (images.length) {
-      image_urls = await Promise.all(
+      img_urls = await Promise.all(
         images.map(async (image) => {
           const fileBuffer = fs.readFileSync(image.path);
           const response = await imagekit.upload({
@@ -39,7 +39,7 @@ export const addPost = async (req, res) => {
     await Post.create({
       user: userId,
       content,
-      image_urls,
+      img_urls,
       post_type,
     });
 
