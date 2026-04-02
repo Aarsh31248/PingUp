@@ -1,27 +1,53 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { dummyPostsData, dummyUserData } from "../assets/assets";
 import Loading from "../components/Loading";
 import UserProfileInfo from "../components/UserProfileInfo";
 import PostCard from "../components/PostCard";
 import moment from "moment";
 import ProfileModal from "../components/ProfileModal";
+import { useAuth } from "@clerk/react";
+import api from "../api/axios";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 const Profile = () => {
+  const currentUser = useSelector((state) => state.user.value);
+
+  const { getToken } = useAuth();
   const { profileId } = useParams();
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [activeTab, setActiveTab] = useState("posts");
   const [showEdit, setShowEdit] = useState(false);
 
-  const fetchUser = async () => {
-    setUser(dummyUserData);
-    setPosts(dummyPostsData);
+  const fetchUser = async (profileId) => {
+    const token = await getToken();
+    try {
+      const { data } = await api.post(
+        "/api/user/profiles",
+        { profileId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (data.success) {
+        setUser(data.profile);
+        setPosts(data.posts);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   useEffect(() => {
-    fetchUser();
-  }, []);
+    if (profileId) {
+      fetchUser(profileId);
+    } else {
+      fetchUser(currentUser._id);
+    }
+  }, [profileId, currentUser]);
 
   return user ? (
     <div className="relative h-full overflow-y-scroll bg-gray-50 p-6">
@@ -74,10 +100,10 @@ const Profile = () => {
           {activeTab === "media" && (
             <div className="flex flex-wrap mt-6 max-w-6xl">
               {posts
-                .filter((post) => post.image_urls.length > 0)
+                .filter((post) => post.img_urls.length > 0)
                 .map((post) => (
                   <>
-                    {post.image_urls.map((image, index) => (
+                    {post.img_urls.map((image, index) => (
                       <Link
                         target="_blank"
                         to={image}
@@ -102,8 +128,8 @@ const Profile = () => {
         </div>
       </div>
 
-          {/* Edit Profile Modal */}
-      {showEdit && <ProfileModal setShowEdit={setShowEdit}/>}
+      {/* Edit Profile Modal */}
+      {showEdit && <ProfileModal setShowEdit={setShowEdit} />}
     </div>
   ) : (
     <Loading />
