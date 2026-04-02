@@ -1,8 +1,8 @@
 import { MapPin, MessageCircle, Plus, UserPlus } from "lucide-react";
-import { dummyUserData } from "../assets/assets";
+import { useSelector } from "react-redux";
 
 const UserCard = ({ user }) => {
-  const currentUser = dummyUserData;
+  const currentUser = useSelector((state) => state.user.value);
 
   const handleFollow = async () => {};
 
@@ -14,7 +14,7 @@ const UserCard = ({ user }) => {
         <img
           src={user.profile_picture}
           alt=""
-          className="rounded-full w-16 shadow-md mx-auto"
+          className="w-17 h-17 rounded-full object-cover shadow-md mx-auto"
         />
         <p className="mt-4 font-semibold">{user.full_name}</p>
         {user.username && (
