@@ -34,7 +34,7 @@ const Connections = () => {
   const handleUnfollow = async (userId) => {
     try {
       const { data } = await api.post(
-        "/api/users/unfollow",
+        "/api/user/unfollow",
         { id: userId },
         {
           headers: {
@@ -57,7 +57,7 @@ const Connections = () => {
   const acceptConnection = async (userId) => {
     try {
       const { data } = await api.post(
-        "/api/users/accept",
+        "/api/user/accept",
         { id: userId },
         {
           headers: {
@@ -70,7 +70,7 @@ const Connections = () => {
         toast.success(data.message);
         dispatch(fetchConnections(await getToken()));
       } else {
-        toast(data.message);
+        toast.error(data.message);
       }
     } catch (error) {
       toast.error(error.message);

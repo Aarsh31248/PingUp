@@ -293,7 +293,7 @@ export const acceptConnectionRequest = async (req, res) => {
     await connection.save();
 
     return res.json({
-      success: false,
+      success: true,
       message: "Connection accepted successfully",
     });
   } catch (error) {
