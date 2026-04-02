@@ -1,8 +1,11 @@
+import { useAuth } from "@clerk/react";
 import { BadgeCheck, Heart, MessageCircle, Share2 } from "lucide-react";
 import moment from "moment";
 import { useState } from "react";
-import { dummyUserData } from "../assets/assets";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
 
 const PostCard = ({ post }) => {
   const postWithHashtags = post.content.replace(
@@ -11,16 +14,48 @@ const PostCard = ({ post }) => {
   );
 
   const [likes, setLikes] = useState(post.likes_count);
-  const currentUser = dummyUserData;
+  const currentUser = useSelector((state) => state.user.value);
 
-  const handleLike = async () => {};
+  const { getToken } = useAuth();
 
-  const navigate = useNavigate()
+  const handleLike = async () => {
+    try {
+      const { data } = await api.post(
+        "/api/post/like",
+        { postId: post._id },
+        {
+          headers: {
+            Authorization: `Bearer ${await getToken()}`,
+          },
+        },
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        setLikes((prev) => {
+          if (prev.includes(currentUser._id)) {
+            return prev.filter((id) => id !== currentUser._id);
+          } else {
+            return [...prev, currentUser._id];
+          }
+        });
+      } else {
+        toast(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const navigate = useNavigate();
 
   return (
     <div className="bg-white rounded-xl shadow p-4 space-y-4 w-full max-w-2xl">
       {/* User Info */}
-      <div onClick={() => navigate('/profile/' + post.user._id)} className="inline-flex items-center gap-3 cursor-pointer">
+      <div
+        onClick={() => navigate("/profile/" + post.user._id)}
+        className="inline-flex items-center gap-3 cursor-pointer"
+      >
         <img
           src={post.user.profile_picture}
           alt=""
@@ -47,12 +82,12 @@ const PostCard = ({ post }) => {
 
       {/* Images */}
       <div className="grid grid-cols-2 gap-2">
-        {post.image_urls.map((img, index) => (
+        {post.img_urls?.map((img, index) => (
           <img
             src={img}
             alt=""
             key={index}
-            className={`w-full h-48 object-cover rounded-lg ${post.image_urls.length === 1 && "col-span-2 h-auto"}`}
+            className={`w-full h-48 object-cover rounded-lg ${post.img_urls.length === 1 && "col-span-2 h-auto"}`}
           />
         ))}
       </div>
